@@ -10,10 +10,43 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.lang.System.exit;
+
 /**
  * A class containing methods for processing PDF files.
  */
 public class PdfDocumentService {
+
+    public static final Pattern PAGE_NAME_PATTERN = Pattern.compile("[^.]+\\.pdf_page(\\d+)\\.pdf");
+
+    static void main(String[] args) {
+        if (args == null || args.length == 0) {
+            System.out.println("Please provide full path to a source-folder with PDF files");
+            System.out.println("Example usage:");
+            System.out.println("java -cp path/to/app.jar org.informiz.pdf.txt.PdfDocumentService /full/path/to/pdf/folder/");
+            exit(1);
+        }
+
+        File srcFolder = new File(args[0]);
+        if (! srcFolder.exists()) {
+            System.out.println("Source-folder " + args[0] + " does not exist");
+            exit(2);
+        }
+
+        System.out.println("Processing documents under " + args[0] + " and sub-folders...");
+
+        try {
+            Utils.processFilesInFolder(srcFolder, srcFolder.getName(), Utils::concatPages, null);
+            System.out.println("Done extracting text, output available at " + System.getProperty("java.io.tmpdir"));
+            System.out.println("You can find the extracted text-pages under " +
+                    System.getProperty("java.io.tmpdir") +
+                    " inside folders named 'converted_' followed by original PDF file name and random numbers");
+
+        } catch (IOException e) {
+            throw new RuntimeException("Unexpected error while processing files", e);
+        }
+    }
+
 
     /**
      * Split a PDF file into individual PDF pages in the output folder.
@@ -22,7 +55,19 @@ public class PdfDocumentService {
      *                     originalFileName.pdf_page123.pdf
      */
     public static void splitPdf(File file, File outputFolder) {
-        PdfBatchUtils.SplitJob splitJob = new PdfBatchUtils.SplitJob(file.toPath(), outputFolder.toPath(), file.getName());
+        splitPdf(file, outputFolder, file.getName());
+    }
+
+    /**
+     * Split a PDF file into individual PDF pages in the output folder.
+     * @param file the file to split
+     * @param outputFolder where to save the individual pages. File names follow the pattern:
+     *                     filenamePrefix.pdf_page123.pdf
+     * @param filenamePrefix the prefix for the resulting file names - should indicate the original filename
+     *                       (possibly including directory/path of the original file)
+     */
+    public static void splitPdf(File file, File outputFolder, String filenamePrefix) {
+        PdfBatchUtils.SplitJob splitJob = new PdfBatchUtils.SplitJob(file.toPath(), outputFolder.toPath(), filenamePrefix);
         PdfBatchUtils.batchSplit(List.of(splitJob), paths -> {}, throwable -> {});
     }
 
@@ -33,14 +78,14 @@ public class PdfDocumentService {
      *                            originalFileName.pdf_page123.pdf.txt
      */
     public static void extractText(File pdfFile, File outputFolder) {
-        Matcher namePattern = Pattern.compile("[^.]+\\.pdf_page(\\d+)\\.pdf").matcher(pdfFile.getName());
+        Matcher namePattern = PAGE_NAME_PATTERN.matcher(pdfFile.getName());
         if (! namePattern.find())
             return;
 
         int pageNum;
         try {
             pageNum = Integer.parseInt(namePattern.group(1));
-        } catch (IllegalStateException e) {
+        } catch (NumberFormatException e) {
             throw new RuntimeException("Unexpected state: can't extract page number from file-name " +
                     pdfFile.getName(), e);
         }
