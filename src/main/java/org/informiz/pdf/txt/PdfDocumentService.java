@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.System.exit;
+import static org.informiz.pdf.txt.Utils.createTxtPagesFolder;
 
 /**
  * A class containing methods for processing PDF files.
@@ -36,26 +37,18 @@ public class PdfDocumentService {
         System.out.println("Processing documents under " + args[0] + " and sub-folders...");
 
         try {
-            Utils.processFilesInFolder(srcFolder, srcFolder.getName(), Utils::concatPages, null);
-            System.out.println("Done extracting text, output available at " + System.getProperty("java.io.tmpdir"));
-            System.out.println("You can find the extracted text-pages under " +
-                    System.getProperty("java.io.tmpdir") +
-                    " inside folders named 'converted_' followed by original PDF file name and random numbers");
+            File outputFolder = createTxtPagesFolder();
+            Utils.processFilesInFolder(srcFolder, srcFolder.getName(), outputFolder);
+            //Utils::concatPages
+            System.out.println("Done extracting text");
 
+            // TODO: delete tmp files/folders?
+            // System.out.println("Intermediate files were created under " + System.getProperty("java.io.tmpdir"));
+
+            System.out.println("Text-pages are available under " + outputFolder.getAbsolutePath());
         } catch (IOException e) {
             throw new RuntimeException("Unexpected error while processing files", e);
         }
-    }
-
-
-    /**
-     * Split a PDF file into individual PDF pages in the output folder.
-     * @param file the file to split
-     * @param outputFolder where to save the individual pages. File names follow the pattern:
-     *                     originalFileName.pdf_page123.pdf
-     */
-    public static void splitPdf(File file, File outputFolder) {
-        splitPdf(file, outputFolder, file.getName());
     }
 
     /**
@@ -69,6 +62,16 @@ public class PdfDocumentService {
     public static void splitPdf(File file, File outputFolder, String filenamePrefix) {
         PdfBatchUtils.SplitJob splitJob = new PdfBatchUtils.SplitJob(file.toPath(), outputFolder.toPath(), filenamePrefix);
         PdfBatchUtils.batchSplit(List.of(splitJob), paths -> {}, throwable -> {});
+    }
+
+    public static int getNumPages(File file) {
+        int numPages;
+        try (PdfReader reader = new PdfReader(new FileInputStream(file))) {
+            numPages = reader.getNumberOfPages();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return numPages;
     }
 
     /**

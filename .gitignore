@@ -1,4 +1,6 @@
 target/
+records/
+text_pages/
 
 ### IntelliJ IDEA ###
 .idea
