@@ -57,12 +57,12 @@ public class ElasticSearchService {
             System.out.println("Example usage for converting PDF files to text and uploading the pages to ElasticSearch:");
             System.out.println("ES_LOCAL_API_KEY=je0i4rfvnho....ero8p9vk4jw==  " +
                     "java -cp path/to/app.jar " +
-                    "org.informiz.pdf.txt.ElasticSearchService /full/path/to/source/folder/");
+                    "org.informiz.pdf.txt.ElasticSearchService /full/path/to/pdf/folder/");
 
             System.out.println("Example usage for uploading already-processed records to ElasticSearch:");
             System.out.println("ES_LOCAL_API_KEY=je0i4rfvnho....ero8p9vk4jw==  " +
                     "java -cp path/to/app.jar " +
-                    "org.informiz.pdf.txt.ElasticSearchService /full/path/to/source/folder/ --records");
+                    "org.informiz.pdf.txt.ElasticSearchService /full/path/to/records/folder/ --records");
             exit(1);
         }
 
