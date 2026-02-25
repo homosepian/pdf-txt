@@ -57,6 +57,6 @@ page-number, are available in the records returned by ElasticSearch.
 There is additional processing that you can run on the text-pages in order to extract named-entities (such as people and 
 places, but also dates). You can then upload these records to ElasticSearch and search by e.g., a date-range.
 
-![img_1.png](img_1.png)x
+![ner.png](ner.png)x
 
 It requires also installing Python, instructions are available in the [nlp folder](/nlp/README.md)
